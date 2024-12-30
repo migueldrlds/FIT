@@ -5,7 +5,7 @@ import { Video, ResizeMode } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useNavigation } from 'expo-router';
 import 'react-native-gesture-handler'; // Importa primero
-
+import { useTheme } from '@/app/themecontext';
 
 export default function Index() {
   const router = useRouter();

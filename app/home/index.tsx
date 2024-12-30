@@ -1,51 +1,174 @@
-import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, SafeAreaView, Platform, StatusBar } from 'react-native';
-import { useTheme } from '../themecontext'; // Usar el hook personalizado para acceder al tema
+import React, { useState } from 'react';
+import { useTheme } from '@/app/themecontext';
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  SafeAreaView,
+  TextInput,
+  Platform,
+  StatusBar,
+} from 'react-native';
+import zonasData from './ZONAS/zonas.json';
+import ejerciciosData from './ZONAS/ejercicios.json';
+import { NavigationProp } from '@react-navigation/native';
 
-export default function Index() {
-  const { theme } = useTheme(); // Usar el tema global usando el hook personalizado
-  const isDarkMode = theme === 'Oscuro'; // Verificar si el tema global es oscuro
+interface Ejercicio {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  duracion: string;
+  video: string;
+  imagen: string;
+  zonaId: string;
+}
 
-  // Función para obtener el saludo adecuado según la hora
-  const getGreeting = () => {
-    const currentHour = new Date().getHours();
+interface Zona {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  imagen?: string;
+}
 
-    if (currentHour < 12) {
-      return '¡Buenos días, Angel!';
-    } else if (currentHour >= 12 && currentHour < 18) {
-      return '¡Buenas tardes, Angel!';
+type IndexProps = {
+  navigation: NavigationProp<any>;
+};
+
+export default function Index({ navigation }: IndexProps) {
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'Oscuro';
+
+  const [searchText, setSearchText] = useState('');
+  const [filteredResults, setFilteredResults] = useState<(Zona | Ejercicio)[]>([
+    ...zonasData.zonas,
+    ...ejerciciosData,
+  ]);
+
+  const handleSearch = (text: string) => {
+    setSearchText(text);
+
+    if (text === '') {
+      setFilteredResults([...zonasData.zonas, ...ejerciciosData]);
     } else {
-      return '¡Buenas noches, Angel!';
+      const filteredZonas = zonasData.zonas.filter(
+        (zona) =>
+          zona.nombre.toLowerCase().includes(text.toLowerCase()) ||
+          zona.descripcion.toLowerCase().includes(text.toLowerCase())
+      );
+
+      const filteredEjercicios = ejerciciosData.filter(
+        (ejercicio) =>
+          ejercicio.nombre.toLowerCase().includes(text.toLowerCase()) ||
+          ejercicio.descripcion.toLowerCase().includes(text.toLowerCase())
+      );
+
+      setFilteredResults([...filteredZonas, ...filteredEjercicios]);
+    }
+  };
+
+  const handleItemPress = (item: Zona | Ejercicio) => {
+    if ('zonaId' in item) {
+      // Es un ejercicio
+      console.log('Ejercicio seleccionado:', item);
+    } else {
+      // Es una zona
+      navigation.navigate('Ejercicios', { zona: item });
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#ffffff' }]}>
-      {/* Ajuste de la barra de estado */}
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: isDarkMode ? '#121212' : '#ffffff' },
+      ]}
+    >
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      
-      {/* Encabezado estático */}
-      <View style={styles.header}>
-        <Text style={[styles.greeting, { color: isDarkMode ? '#FFFFFF' : '#242424' }]}>{getGreeting()}</Text>
-        <TouchableOpacity style={[styles.searchButton, { backgroundColor: isDarkMode ? '#333' : '#f0f0f0' }]}>
-          <Image source={require('../../assets/images/search-icon.png')} style={[styles.searchIcon, { tintColor: isDarkMode ? '#FFFFFF' : '#000' }]} />
-        </TouchableOpacity>
+      <View style={styles.searchBar}>
+        <TextInput
+          value={searchText}
+          onChangeText={handleSearch}
+          placeholder="Buscar zona o ejercicio"
+          placeholderTextColor={isDarkMode ? '#aaa' : '#555'}
+          style={[
+            styles.searchInput,
+            { backgroundColor: isDarkMode ? '#333' : '#f0f0f0', color: isDarkMode ? '#fff' : '#000' },
+          ]}
+        />
       </View>
-
-      {/* Contenido desplazable */}
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        {/* Área de pesas */}
-        <Text style={[styles.sectionTitle, { color: isDarkMode ? '#FFFFFF' : '#242424' }]}>Área de pesas</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-          <View style={[styles.zoneCard, { backgroundColor: isDarkMode ? '#333' : '#E0E0E0' }]}>
-            <Image source={{ uri: 'https://via.placeholder.com/452x226' }} style={styles.zoneImage} />
-            <Text style={[styles.zoneTitle, { color: isDarkMode ? '#FFFFFF' : '#242424' }]}>ZONA 1</Text>
-            <Text style={[styles.zoneSubtitle, { color: isDarkMode ? '#B3B3B3' : '#666' }]}>Abdomen</Text>
-          </View>
-        </ScrollView>
-
-        {/* Otros componentes aquí */}
-      </ScrollView>
+      <Text style={[styles.sectionTitle, { color: isDarkMode ? '#fff' : '#000' }]}>
+        Zonas y Ejercicios
+      </Text>
+      <FlatList
+        data={filteredResults}
+        keyExtractor={(item) => ('zonaId' in item ? item.id : item.id)}
+        renderItem={({ item }) =>
+          'zonaId' in item ? (
+            // Renderizar ejercicio
+            <TouchableOpacity
+              style={[
+                styles.card,
+                { backgroundColor: isDarkMode ? '#333333' : '#f0f0f0' },
+              ]}
+              onPress={() => handleItemPress(item)}
+            >
+              <Image source={{ uri: item.imagen }} style={styles.image} />
+              <Text
+                style={[
+                  styles.cardTitle,
+                  { color: isDarkMode ? '#ffffff' : '#000000' },
+                ]}
+              >
+                {item.nombre}
+              </Text>
+              <Text
+                style={[
+                  styles.cardDescription,
+                  { color: isDarkMode ? '#bbbbbb' : '#555555' },
+                ]}
+              >
+                {item.descripcion}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            // Renderizar zona
+            <TouchableOpacity
+              style={[
+                styles.zoneCard,
+                { backgroundColor: isDarkMode ? '#333' : '#e0e0e0' },
+              ]}
+              onPress={() => handleItemPress(item)}
+            >
+              <Image source={{ uri: item.imagen || 'https://via.placeholder.com/300' }} style={styles.zoneImage} />
+              <Text
+                style={[
+                  styles.zoneTitle,
+                  { color: isDarkMode ? '#fff' : '#000' },
+                ]}
+              >
+                {item.nombre}
+              </Text>
+              <Text
+                style={[
+                  styles.zoneSubtitle,
+                  { color: isDarkMode ? '#aaa' : '#555' },
+                ]}
+              >
+                {item.descripcion}
+              </Text>
+            </TouchableOpacity>
+          )
+        }
+        contentContainerStyle={styles.flatListContent}
+        ListEmptyComponent={
+          <Text style={[styles.emptyMessage, { color: isDarkMode ? '#bbbbbb' : '#555555' }]}>
+            No se encontraron resultados
+          </Text>
+        }
+      />
     </SafeAreaView>
   );
 }
@@ -53,66 +176,71 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: Platform.OS === 'android' ? 40 : 0, // Ajustar el margen superior para Android
+    paddingTop: Platform.OS === 'android' ? 40 : 0,
   },
-  scrollViewContent: {
-    paddingHorizontal: 20, // Ajustar el margen horizontal aquí
-    paddingBottom: 20, // Espacio inferior para evitar que el contenido quede pegado al borde inferior
+  searchBar: {
+    marginHorizontal: 20,
+    marginVertical: 10,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20, // Ajustar el margen horizontal del encabezado
+  searchInput: {
+    borderRadius: 8,
+    paddingHorizontal: 15,
     paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc', // Línea separadora
-  },
-  greeting: {
-    fontSize: 26, // Aplicar el mismo tamaño que el título de Configuración
-    fontWeight: 'bold', // Negrita como el título de Configuración
-    marginBottom: 10, // Ajustar el margen inferior
-    fontFamily: 'System', // Aplicar la fuente predeterminada del sistema
-  },
-  searchButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  searchIcon: {
-    width: 20,
-    height: 20,
+    fontSize: 16,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '400',
+    fontSize: 18,
+    fontWeight: 'bold',
     marginVertical: 10,
-    fontFamily: 'System', // Aplicar la fuente predeterminada del sistema
+    marginHorizontal: 20,
   },
-  horizontalScroll: {
-    flexDirection: 'row',
-    marginBottom: 20,
+  flatListContent: {
+    paddingHorizontal: 20,
   },
   zoneCard: {
-    width: 165,
-    marginRight: 20,
+    padding: 16,
+    marginVertical: 8,
     borderRadius: 8,
+    alignItems: 'center',
   },
   zoneImage: {
     width: '100%',
     height: 120,
+    borderRadius: 8,
+    marginBottom: 8,
   },
   zoneTitle: {
-    fontSize: 11,
-    fontWeight: '500',
-    marginTop: 5,
-    fontFamily: 'System', // Aplicar la fuente predeterminada del sistema
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   zoneSubtitle: {
-    fontSize: 10,
-    fontWeight: '400',
-    fontFamily: 'System', // Aplicar la fuente predeterminada del sistema
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  card: {
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  image: {
+    width: '100%',
+    height: 120,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  cardDescription: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  emptyMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
   },
 });

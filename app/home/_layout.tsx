@@ -1,16 +1,42 @@
 // _layout.tsx
 import React from 'react';
 import { Image } from 'react-native';
+import { createStackNavigator } from '@react-navigation/stack';
 import { AnimatedTabBarNavigator, DotSize } from 'react-native-animated-nav-tab-bar';
-import styled from 'styled-components/native'; // Usar styled-components para los estilos
-import PlanScreen from './plan';
+import styled from 'styled-components/native';
 import IndexScreen from './index';
+import EjerciciosScreen from './ZONAS/ejercicios';
+import PlanScreen from './plan';
 import SettingsScreen from './settings';
 import CalendarScreen from './calendar';
-import { useTheme } from '../themecontext'; // Hook para el tema
+import { useTheme } from '../themecontext';
 
+// Define el tipo de parámetros de navegación para el Stack
+type RootStackParamList = {
+  Zonas: undefined;
+  Ejercicios: {
+    zona: {
+      id: string;
+      nombre: string;
+      descripcion: string;
+      imagen?: string;
+      ejercicios?: {
+        id: string;
+        nombre: string;
+        descripcion: string;
+        duracion: string;
+        video: string;
+        imagen: string;
+      }[];
+    };
+  };
+};
+
+// Crear navegadores
+const Stack = createStackNavigator<RootStackParamList>();
 const Tabs = AnimatedTabBarNavigator();
 
+// Placeholder para los íconos
 const Placeholder = styled.Image`
   width: 30px;
   height: 30px;
@@ -22,15 +48,32 @@ const TabBarPlaceholder = () => {
   );
 };
 
+// Configuración del Stack.Navigator
+function StackNavigator() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen
+        name="Zonas"
+        component={IndexScreen}
+      />
+      <Stack.Screen
+        name="Ejercicios"
+        component={EjerciciosScreen}
+      />
+    </Stack.Navigator>
+  );
+}
+
+// Configuración del Tabs.Navigator
 export default function TabsLayout() {
-  const { theme } = useTheme(); // Accedemos al tema actual del dispositivo
+  const { theme } = useTheme();
   const isDarkMode = theme === 'Oscuro';
 
-  // Definir colores según el modo oscuro o claro
+  // Configuración de colores según el tema
   const activeTintColor = isDarkMode ? '#ffffff' : '#000000';
   const inactiveTintColor = isDarkMode ? '#888888' : '#999999';
-  const backgroundColor = isDarkMode ? '#121212' : '#F0F0F3'; // Ajustar al tono del QR
-  const tabBarBackground = isDarkMode ? '#2C2C2E' : '#ffffff'; // Color de la barra
+  const backgroundColor = isDarkMode ? '#121212' : '#F0F0F3';
+  const tabBarBackground = isDarkMode ? '#2C2C2E' : '#ffffff';
 
   return (
     <Tabs.Navigator
@@ -39,48 +82,48 @@ export default function TabsLayout() {
         inactiveTintColor: inactiveTintColor,
         activeBackgroundColor: backgroundColor,
         labelStyle: {
-          fontSize: 12, // Ajusta el tamaño de la fuente del texto
-          fontWeight: 'bold', // Asegúrate de que el texto sea visible
+          fontSize: 12,
+          fontWeight: 'bold',
         },
         tabStyle: {
-          paddingVertical: 5, // Ajusta el padding para que haya espacio para el texto e icono
+          paddingVertical: 5,
         },
       }}
       appearance={{
         shadow: true,
         floating: true,
-        dotSize: DotSize.MEDIUM, // Aumentar el tamaño del indicador circular
-        tabBarBackground: tabBarBackground, // Fondo que cambia según el tema
-        dotCornerRadius: 50, // Asegurarse de que el punto esté bien redondeado
+        dotSize: DotSize.MEDIUM,
+        tabBarBackground: tabBarBackground,
+        dotCornerRadius: 50,
       }}
     >
-      {/* Reordenamos la pantalla Index para que sea la primera */}
+      {/* Pestaña Inicio con Stack Navigator */}
       <Tabs.Screen
         name="Inicio"
-        component={IndexScreen}
+        component={StackNavigator}
         options={{
-          tabBarIcon: () => <TabBarPlaceholder />
+          tabBarIcon: () => <TabBarPlaceholder />,
         }}
       />
       <Tabs.Screen
         name="Check In"
         component={PlanScreen}
         options={{
-          tabBarIcon: () => <TabBarPlaceholder />
+          tabBarIcon: () => <TabBarPlaceholder />,
         }}
       />
       <Tabs.Screen
         name="Calendar"
         component={CalendarScreen}
         options={{
-          tabBarIcon: () => <TabBarPlaceholder />
+          tabBarIcon: () => <TabBarPlaceholder />,
         }}
       />
       <Tabs.Screen
         name="Configuración"
         component={SettingsScreen}
         options={{
-          tabBarIcon: () => <TabBarPlaceholder />
+          tabBarIcon: () => <TabBarPlaceholder />,
         }}
       />
     </Tabs.Navigator>
